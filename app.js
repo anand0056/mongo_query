@@ -4,30 +4,34 @@ const mongoose = require('mongoose');
 const app = express();
 app.use(express.json());
 
-mongoose.connect('mongodb://127.0.0.1:27017/mydb')
-  .then(() => console.log('MongoDB connected'))
-  .catch((err) => console.error('MongoDB connection error:', err));
-
-const AnySchema = new mongoose.Schema({}, { strict: false });
-const Order = mongoose.model('Order', AnySchema, 'orders');
-
-app.get('/orders/report', async (req, res) => {
-  try {
-    const data = await Order.aggregate([
-      {
-        $match: { status: 'completed' }
-      },
-      {
-        $group: {
-          _id: '$customerName',
-          totalAmount: { $sum: '$amount' },
-          totalOrders: { $sum: 1 }
+const mongoUrl = "mongourl";
+const collectionName = 'vehiclePositions';
+const queryBody = [{
+  $match: {
+    _id: "353742371875287_2026-05-07"
+  }
+},
+{
+  $project: {
+    _id: 0,
+    data: {
+      $map: {
+        input: "$locations",
+        as: "loc",
+        in: {
+          time: "$$loc.time",
+          value: "$$loc.attributes.io201"
         }
-      },
-      {
-        $sort: { totalAmount: -1 }
       }
-    ]);
+    }
+  }
+}];
+
+
+
+app.get('/', async (req, res) => {
+  try {
+    const data = await mongoose.connection.db.collection(collectionName).aggregate(queryBody).toArray();
 
     res.json({
       success: true,
@@ -41,7 +45,12 @@ app.get('/orders/report', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+mongoose.connect(mongoUrl)
+  .then(() => {
+    console.log('MongoDB connected');
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => console.error('MongoDB connection error:', err));
