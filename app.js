@@ -8,18 +8,8 @@ mongoose.connect('mongodb://127.0.0.1:27017/mydb')
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
-const orderSchema = new mongoose.Schema({
-  customerName: String,
-  product: String,
-  amount: Number,
-  status: String,
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
-
-const Order = mongoose.model('Order', orderSchema);
+const AnySchema = new mongoose.Schema({}, { strict: false });
+const Order = mongoose.model('Order', AnySchema, 'orders');
 
 app.get('/orders/report', async (req, res) => {
   try {
